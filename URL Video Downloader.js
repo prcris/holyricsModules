@@ -1,19 +1,19 @@
-var mNameID = 'ytDownlo'+'ader';
-var moduleID = mNameID+''; 
+var uID = 'ytDownlo'+'ader';
+var mUID = uID+''; 
 var defaultLang = 'en';
 var map = null;
 
 function startup(module) { 
 
-moduleID = mNameID + module.id;
+mUID = uID + module.id;
 
-logState(module.settings.log, moduleID, 'startup '+ mNameID);
+logState(module.settings.log, mUID, 'startup '+ uID);
 
 }
 
 function info() {
     return {
-        id: mNameID,
+        id: uID,
         name: 'YouTube Video Downlo'+'ader',
         description: i18n('It has never been easier to integrate videos/audios from various platforms into your Holyrics library!<br>' +
     'With this module, you can downlo'+'ad videos/audios practically and efficiently, making online content available for offline use in your presentations or broadcasts.<br>' +
@@ -65,7 +65,7 @@ function settings(module) {
             label: i18n('Enable log'),
             type: 'boolean',
             onchange: function (obj) {
-                logState(obj.input.log, moduleID, ' onchange ' + mNameID);
+                logState(obj.input.log, mUID, ' onchange ' + uID);
             }
         }
     ];
@@ -137,7 +137,7 @@ function actions(module) {
 
                 var q = module.inputSettings('downl' + 'oad_cfgs', inputs);
                 if (q !== null) {
-                    h.log(moduleID, i18n('Downlo'+'ading video with settings: {}', q));
+                    h.log(mUID, i18n('Downlo'+'ading video with settings: {}', q));
                     createVideoDownFile(q,module);
                 }
             }
@@ -231,7 +231,7 @@ function createVideoDownFile(inputs,module) {
     });
 
     try {
-        h.log(moduleID, commandLines.join('\r\n'));
+        h.log(mUID, commandLines.join('\r\n'));
         h.executeFile( '.modules/ytdownlo'+'ader.bat');
     } catch (e) {
         h.notificationError(i18n('Error executing BAT file: {}', String(e)), 5);
@@ -302,8 +302,8 @@ function convertBars(path) {
 }
 
 function checkOS() {
-   var sVersion = h.hly('GetVersion').data.platform;
-   if (sVersion != 'win') {
+   var gVersion = h.hly('GetVersion').data.platform;
+   if (gVersion != 'win') {
       showMessage(i18n('This module was designed to run only on the "Windows" operating system'));
       return false
    }
@@ -398,7 +398,7 @@ function createFirstBat(s,module) {
 
 // __SCRIPT_SEPARATOR__ - info:7b226e616d65223a2274726967676572227d
 function holyricsPath(path) {
-var key = moduleID+'_path';
+var key = mUID+'_path';
 if (path) {
     var f = path;
     var p = f.indexOf('files');
@@ -407,23 +407,32 @@ if (path) {
     showMessage('Downlo'+'ad Web Video', i18n('Holyrics location on the computer successfully completed!'));
     }
    var result = h.restore(key);
-   h.log(moduleID, '{%t} Holyrics base path {}', result);
+   if (!result && h.isMinimumVersion('2.24.0')) {
+      var pathHolyrics = convertBars(h.hly('GetVersion').data.baseDir + '/holyrics/');
+      h.store(key, convertBars(pathHolyrics));  
+      result = pathHolyrics;
+      h.log(mUID, '{%t} Holyrics base path ajustado para {}', result);
+      }
+   h.log(mUID, '{%t} Holyrics base path {}', result);
 return result
 }
-
+ 
 function triggers(module) {
   var arr = [];
-  arr.push({
-    id: "capture_holyrics_path" + mNameID,
-    when: "displaying",
-    item: "any_video",
-    action: function(obj) {
-        if (holyricsPath()) {
-           return;
-        }
-        holyricsPath(obj.file_path);
-        }
-    });
+  if (!h.isMinimumVersion('2.24.0')) {
+    h.log(mUID,'{%t} Versão inferior à 2.24, criando trigger');
+    arr.push({
+      id: "capture_holyrics_path" + uID,
+      when: "displaying",
+      item: "any_video",
+      action: function(obj) {
+          if (holyricsPath()) {
+             return;
+          }
+          holyricsPath(obj.file_path);
+          }
+       });
+  }
   return arr; 
 }
 // __SCRIPT_SEPARATOR__ - info:7b226e616d65223a226931386e227d
