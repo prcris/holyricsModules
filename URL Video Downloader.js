@@ -1,19 +1,19 @@
-var uID = 'ytDownlo'+'ader';
-var mUID = uID+''; 
+var mID = 'ytDownlo'+'ader';
+var mUID = mID+''; 
 var defaultLang = 'en';
 var map = null;
 
 function startup(module) { 
 
-mUID = uID + module.id;
+mUID = mID + module.id;
 
-logState(module.settings.log, mUID, 'startup '+ uID);
+logState(module.settings.log, mUID, 'startup '+ mID);
 
 }
 
 function info() {
     return {
-        id: uID,
+        id: mID,
         name: 'YouTube Video Downlo'+'ader',
         description: i18n('It has never been easier to integrate videos/audios from various platforms into your Holyrics library!<br>' +
     'With this module, you can downlo'+'ad videos/audios practically and efficiently, making online content available for offline use in your presentations or broadcasts.<br>' +
@@ -26,10 +26,43 @@ function info() {
     '<a href="https://github.com/yt-dlp/yt-dlp/releases" target="_blank">"https://github.com/yt-dlp/yt-dlp/releases"</a>, and<br>' +
     '<a href="https://ffmpeg.org/downlo'+'ad.html" target="_blank">https://ffmpeg.org/downlo'+'ad.html</a><br><br><hr><br>' +
     'If the module stops downlo'+'ading videos, the "yt-dlp" version needs to be updated.<br>' +
-    'This can happen at any time, so use the module wisely, but have a plan B.<br>')
+    'This can happen at any time, so use the module wisely, but have a plan B.<br>') + getInfoVDDMM()
     }
 }
 
+// __SCRIPT_SEPARATOR__ - info:7b226e616d65223a22636f6e74657874416374696f6e73227d
+function contextActions(module) {
+  var arr = [];
+  arr.push({
+    name: spanIcon('\ue63a') + ' ' + i18n('Download from Youtube') + ' (' + mID + ')',
+    types: ['song'],
+    action: function (evt) {
+      var url = h.hly('GetLyrics', { id: evt.item.id }).data.streaming.audio.youtube;
+      h.log(mUID, '{%t} url {}', h.toPrettyJson(url));
+      if (url) {
+        module.settings.download_cfgs.video_url = url;
+        downVideo(module);
+      } else {
+        showMessage(mID, i18n('This song does not have an associated Youtube URL'));
+      }
+    },
+  });
+  arr.push({
+    name: spanIcon('\ue63a') + ' ' + i18n('Download Playback from Youtube') + ' (' + mID + ')',
+    types: ['song'],
+    action: function (evt) {
+      var url = h.hly('GetLyrics', { id: evt.item.id }).data.streaming.backing_track.youtube;
+      h.log(mUID, '{%t} url {}', h.toPrettyJson(url));
+      if (url) {
+        module.settings.download_cfgs.video_url = url;
+        downVideo(module);
+      } else {
+        showMessage(mID, i18n('This song does not have an associated playback Youtube URL'));
+      }
+    },
+  });
+  return arr;
+}
 
 // __SCRIPT_SEPARATOR__ - info:7b226e616d65223a2273657474696e6773227d
 function settings(module) {
@@ -65,7 +98,7 @@ function settings(module) {
             label: i18n('Enable log'),
             type: 'boolean',
             onchange: function (obj) {
-                logState(obj.input.log, mUID, ' onchange ' + uID);
+                logState(obj.input.log, mUID, ' onchange ' + mID);
             }
         }
     ];
@@ -78,6 +111,16 @@ function actions(module) {
             hint: i18n('Downlo'+'ad Web Video and Convert to MP4/MP3'),
             icon: 'ondemand_video',
             action: function () {
+                 downVideo(module);
+            }
+        }
+    ];
+
+    return act;
+}
+
+function downVideo(module) {
+
                 var s = module.settings;
                 var inputs = [];
                 if (!holyricsPath()) { 
@@ -131,7 +174,7 @@ function actions(module) {
                     id: 'output_folder',
                     label: i18n('Destination Folder'),
                     type: 'string',
-                    default_value: '.ModuleDownlo'+'ad',
+                    default_value: mID,
                     description: i18n('Specify the folder where the downlo'+'aded video will be saved.')
                 });
 
@@ -139,15 +182,8 @@ function actions(module) {
                 if (q !== null) {
                     h.log(mUID, i18n('Downlo'+'ading video with settings: {}', q));
                     createVideoDownFile(q,module);
-                }
-            }
-        }
-    ];
-
-    return act;
+                }         
 }
-
-
 // __SCRIPT_SEPARATOR__ - info:7b226e616d65223a2266756e6374696f6e73227d
 function createVideoDownFile(inputs,module) {
     if (!checkOS()) {
@@ -219,6 +255,7 @@ function createVideoDownFile(inputs,module) {
 
     commandLines.push(ec + ' .');
     commandLines.push(ec + ' ' + i18n('Files saved in folder')+' '+output_folder);
+    commandLines.push('start ' + destFolder);
     commandLines.push(ec + ' ===========================================');
     commandLines.push(ec + ' ====    ' + i18n('  Processing complete  ') + '  ==========');
     commandLines.push(ec + ' ===========================================');
@@ -419,10 +456,11 @@ return result
  
 function triggers(module) {
   var arr = [];
+  try {
   if (!h.isMinimumVersion('2.24.0')) {
     h.log(mUID,'{%t} Versão inferior à 2.24, criando trigger');
     arr.push({
-      id: "capture_holyrics_path" + uID,
+      id: "capture_holyrics_path" + mID,
       when: "displaying",
       item: "any_video",
       action: function(obj) {
@@ -433,6 +471,7 @@ function triggers(module) {
           }
        });
   }
+  } catch (e) { h.log("",'Erro {}',[e]) };
   return arr; 
 }
 // __SCRIPT_SEPARATOR__ - info:7b226e616d65223a226931386e227d
@@ -1046,6 +1085,37 @@ arr.push({
         'Questo può accadere in qualsiasi momento, quindi usa il modulo con saggezza, ma tieni un piano B.<br>'
 });
 
+arr.push(
+  {
+    en: 'Download from Youtube',
+    pt: 'Baixar do Youtube',
+    ru: 'Скачать с Youtube',
+    es: 'Descargar de Youtube',
+    it: 'Scarica da Youtube',
+  },
+  {
+    en: 'Download Playback from Youtube',
+    pt: 'Baixar Playback do Youtube',
+    ru: 'Скачать Playback с Youtube',
+    es: 'Descargar Playback de Youtube',
+    it: 'Scarica Playback da Youtube',
+  },
+  {
+    en: 'This song does not have an associated Youtube URL',
+    pt: 'Esta música não possui uma URL do youtube associada',
+    ru: 'У этой песни нет связанной ссылки на Youtube',
+    es: 'Esta canción no tiene una URL de Youtube asociada',
+    it: 'Questa canzone non ha un URL di Youtube associato',
+  },
+  {
+    en: 'This song does not have an associated playback Youtube URL',
+    pt: 'Esta música não possui uma URL de playback do youtube associada',
+    ru: 'У этой песни нет связанной ссылки на Youtube Playback',
+    es: 'Esta canción no tiene una URL de playback de Youtube asociada',
+    it: 'Questa canzone non ha un URL di playback Youtube associato',
+  }
+);
+
     return arr;
 }
 
@@ -1084,4 +1154,21 @@ function i18n(candidate, arr) {
             }
         }
         return r;
+}
+// __SCRIPT_SEPARATOR__ - info:7b226e616d65223a22696e636c75646573227d
+function getInfoVDDMM() {
+    var translations = {
+        pt: "<hr><br>@ Para dicas sobre automação com Holyrics, visite meu canal no YouTube:<br><p style='padding-left: 20px;'><a href='https://youtube.com/@multimidiaverdadebalneario'>@multimidiaverdadebalneario</a></p><br><p style='padding-left: 20px;'>Em caso de dúvidas, fale comigo no tópico 'Automatização & ja'+'vaScript' no grupo de suporte do Telegram <a href='https://t.me/HolyricsBR/97904'>HolyricsBR</a>, marque @prcris que terei prazer em ajudar - #juntos pelo Rei e pelo Reino!<br></p>",
+        en: "<hr><br>@ For automation tips with Holyrics, visit my YouTube channel:<br><p style='padding-left: 20px;'><a href='https://youtube.com/@multimidiaverdadebalneario'>@multimidiaverdadebalneario</a></p><br><p style='padding-left: 20px;'>For questions, contact me in the 'Automation & ja'+'vaScript' topic in the Telegram support group <a href='https://t.me/HolyricsBR/97904'>HolyricsBR</a>, mention @prcris and I'll be happy to help - #together for the King and the Kingdom!<br></p>",
+        ru: "<hr><br>@ Для советов по автоматизации с Holyrics посетите мой канал на YouTube:<br><p style='padding-left: 20px;'><a href='https://youtube.com/@multimidiaverdadebalneario'>@multimidiавerdadebalneario</a></p><br><p style='padding-left: 20px;'>По вопросам обращайтесь ко мне в теме 'Автоматизация и ja'+'vaScript' в группе поддержки Telegram <a href='https://t.me/HolyricsBR/97904'>HolyricsBR</a>, упомяните @prcris, и я буду рад помочь - #вместе для Короля и Королевства!<br></p>",
+        es: "<hr><br>@ Para consejos de automatización con Holyrics, visita mi canal de YouTube:<br><p style='padding-left: 20px;'><a href='https://youtube.com/@multimidiaverdadebalneario'>@multimidiaverdadebalneario</a></p><br><p style='padding-left: 20px;'>Para preguntas, contáctame en el tema 'Automatización & ja'+'vaScript' en el grupo de soporte de Telegram <a href='https://t.me/HolyricsBR/97904'>HolyricsBR</a>, menciona @prcris y estaré encantado de ayudar - #juntos por el Rey y el Reino!<br></p>",
+        it: "<hr><br>@ Per consigli sull'automazione con Holyrics, visita il mio canale YouTube:<br><p style='padding-left: 20px;'><a href='https://youtube.com/@multimidiaverdadebalneario'>@multimidiaverdadebalneario</a></p><br><p style='padding-left: 20px;'>Per domande, contattami nel topic 'Automatizzazione e ja'+'vaScript' nel gruppo di supporto Telegram <a href='https://t.me/HolyricsBR/97904'>HolyricsBR</a>, menziona @prcris e sarò felice di aiutarti - #insieme per il Re e il Regno!<br></p>"
+    };
+    
+    var lang = h.getLanguage();
+    return translations[lang] || translations['en']; // padrão para inglês caso o idioma não esteja definido
+}
+
+function spanIcon(iconCodePoint){
+    return '<html><span style="font-family: Material Icons;">' + iconCodePoint + ' </span>';
 }
